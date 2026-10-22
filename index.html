@@ -621,7 +621,6 @@
             document.getElementById('lootModal').classList.remove('flex');
         }
 
-        // GALLERY ITEMS
         const galleryItems = [
             {
                 type: "image",
@@ -768,7 +767,6 @@ const bgmAudio = new Audio('assets/js_lullaby.mp3');
             } catch(e) {}
         }
 
-        // Toggle button controls the real MP3 song now
         function toggleAudio() {
             initAudio();
             isAudioMuted = !isAudioMuted;
@@ -793,7 +791,6 @@ const bgmAudio = new Audio('assets/js_lullaby.mp3');
             }
         }
 
-        // Mini-Game Canvas Setup (SLOWED DOWN & EASIER TO POP WITH ROBLOX ICONS)
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         let gameScore = 0;
