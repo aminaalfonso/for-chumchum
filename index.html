@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Birthday Quest - Chummy Velares</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        neonCyan: '#00f3ff',
+                        neonPurple: '#b026ff',
+                        neonPink: '#ff007f',
+                        neonGreen: '#39ff14',
+                        neonGold: '#ffcc00',
+                        darkBg: '#0b0c10',
+                        cardBg: '#121420',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    },
+                    boxShadow: {
+                        'neon-cyan': '0 0 15px rgba(0, 243, 255, 0.5), 0 0 30px rgba(0, 243, 255, 0.2)',
+                        'neon-purple': '0 0 15px rgba(176, 38, 255, 0.5), 0 0 30px rgba(176, 38, 255, 0.2)',
+                        'neon-pink': '0 0 15px rgba(255, 0, 127, 0.5), 0 0 30px rgba(255, 0, 127, 0.2)',
+                        'neon-gold': '0 0 15px rgba(255, 204, 0, 0.5), 0 0 30px rgba(255, 204, 0, 0.2)',
+                    },
+                    animation: {
+                        'pulse-glow': 'pulseGlow 2s infinite alternate',
+                        'float': 'float 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 10px rgba(0, 243, 255, 0.4), inset 0 0 10px rgba(0, 243, 255, 0.2)' },
+                            '100%': { boxShadow: '0 0 25px rgba(255, 0, 127, 0.8), inset 0 0 15px rgba(255, 0, 127, 0.4)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            background-color: #0b0c10;
+            color: #e2e8f0;
+            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(176, 38, 255, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(0, 243, 255, 0.12) 0%, transparent 40%),
+                linear-gradient(rgba(18, 20, 32, 0.7) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(18, 20, 32, 0.7) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+        }
+
+        .scanline {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 99;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b0c10;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e1e38;
+            border-radius: 4px;
+            border: 1px solid #00f3ff;
+        }
+    </style>
+</head>
+<body class="min-h-screen relative pb-12">
+
+    <div class="scanline"></div>
+
+    <div id="countdownGate" class="fixed inset-0 bg-[#0b0c10] z-50 flex flex-col items-center justify-center p-4 text-center">
+        <div class="max-w-3xl w-full bg-cardBg/90 border border-neonCyan/50 rounded-3xl p-6 md:p-10 shadow-neon-cyan backdrop-blur-md relative overflow-hidden">
+            <div class="absolute -top-12 -right-12 w-32 h-32 bg-neonPurple/20 rounded-full blur-2xl pointer-events-none"></div>
+            
+            <div class="inline-block bg-neonCyan/10 border border-neonCyan px-4 py-1 rounded-full text-neonCyan text-xs font-mono mb-4 uppercase tracking-widest animate-pulse">
+                <i class="fas fa-lock mr-2"></i> Quest Locked Until October 23
+            </div>
+
+            <h1 class="text-3xl md:text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-neonCyan via-neonPurple to-neonGold uppercase mb-2">
+                CHUMMY VELARES BIRTHDAY COUNTDOWN
+            </h1>
+            <p class="text-gray-400 font-mono text-xs md:text-sm mb-8">
+                WAITING FOR LAUNCH
+            </p>
+
+
+            <div class="grid grid-cols-4 gap-2 md:gap-4 text-center mb-8">
+                <div class="bg-gray-950/80 p-4 md:p-6 rounded-2xl border border-gray-800">
+                    <span id="gateDays" class="text-3xl md:text-5xl font-black font-mono text-neonCyan">00</span>
+                    <span class="block text-[10px] md:text-xs font-mono text-gray-400 mt-1 uppercase">Days</span>
+                </div>
+                <div class="bg-gray-950/80 p-4 md:p-6 rounded-2xl border border-gray-800">
+                    <span id="gateHours" class="text-3xl md:text-5xl font-black font-mono text-neonPurple">00</span>
+                    <span class="block text-[10px] md:text-xs font-mono text-gray-400 mt-1 uppercase">Hours</span>
+                </div>
+                <div class="bg-gray-950/80 p-4 md:p-6 rounded-2xl border border-gray-800">
+                    <span id="gateMinutes" class="text-3xl md:text-5xl font-black font-mono text-neonPink">00</span>
+                    <span class="block text-[10px] md:text-xs font-mono text-gray-400 mt-1 uppercase">Mins</span>
+                </div>
+                <div class="bg-gray-950/80 p-4 md:p-6 rounded-2xl border border-gray-800">
+                    <span id="gateSeconds" class="text-3xl md:text-5xl font-black font-mono text-neonGreen">00</span>
+                    <span class="block text-[10px] md:text-xs font-mono text-gray-400 mt-1 uppercase">Secs</span>
+                </div>
+            </div>
+
+
+            <div class="bg-gray-950/90 border border-gray-800 p-4 md:p-6 rounded-2xl max-w-md mx-auto">
+                <label for="accessCodeInput" class="block text-xs font-mono text-neonCyan mb-2 uppercase tracking-wider">
+                    <i class="fas fa-key mr-1"></i> Enter Access Code to Bypass Early:
+                </label>
+                <div class="flex gap-2">
+                    <input type="password" id="accessCodeInput" placeholder="a specific date special to us..." class="flex-1 bg-gray-900 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-neonCyan">
+                    <button onclick="verifyAccessCode()" class="px-5 py-2.5 bg-gradient-to-r from-neonCyan to-neonPurple text-black font-bold font-mono rounded-xl hover:opacity-90 transition-all text-sm">
+                        UNLOCK
+                    </button>
+                </div>
+                <p id="accessErrorMsg" class="text-[11px] font-mono text-neonPink mt-2 hidden">Invalid Access Code! BLEHHHHH 'DI ALAM</p>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="fixed top-4 right-4 z-40 flex items-center gap-2 bg-cardBg/80 backdrop-blur-md p-2 rounded-xl border border-neonCyan/30 shadow-neon-cyan">
+        <button id="soundToggleBtn" onclick="toggleAudio()" class="px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-neonCyan flex items-center gap-2 text-xs font-mono transition-all">
+            <i id="soundIcon" class="fas fa-volume-xmark"></i>
+            <span id="soundLabel">BGM OFF</span>
+        </button>
+    </div>
+
+    <div class="max-w-6xl mx-auto px-4 pt-6">
+
+        <header class="text-center my-8 relative">
+            <div class="inline-block bg-neonPurple/10 border border-neonPurple px-4 py-1 rounded-full text-neonPurple text-xs font-mono mb-4 uppercase tracking-widest animate-pulse">
+                <i class="fas fa-gamepad mr-2"></i> Player 1 Birthday Quest Initialized
+            </div>
+            
+            <h1 class="text-4xl md:text-6xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-neonCyan via-neonPurple to-neonGold uppercase mb-2">
+                HAPPY BIRTHDAY, <span id="playerNameDisplay" class="underline decoration-neonCyan">CHUMCHUM</span>!
+            </h1>
+            <p class="text-gray-400 font-mono text-sm max-w-xl mx-auto">
+                TAP SIMULATOR REBORN • MY ANIME MINE • ROLL A PET 
+            </p>
+
+
+            <div class="mt-8 bg-cardBg/90 border border-neonCyan/40 rounded-2xl p-6 shadow-neon-cyan max-w-3xl mx-auto backdrop-blur-sm">
+                <h3 class="text-xs font-mono uppercase text-neonCyan tracking-wider mb-4 flex items-center justify-center gap-2">
+                    <i class="fas fa-clock"></i> Countdown to October 23
+                </h3>
+                
+                <div class="grid grid-cols-4 gap-2 md:gap-4 text-center">
+                    <div class="bg-gray-900/80 p-3 md:p-4 rounded-xl border border-gray-800">
+                        <span id="days" class="text-2xl md:text-4xl font-black font-mono text-neonCyan">00</span>
+                        <span class="block text-[10px] md:text-xs font-mono text-gray-400 mt-1 uppercase">Days</span>
+                    </div>
+                    <div class="bg-gray-900/80 p-3 md:p-4 rounded-xl border border-gray-800">
+                        <span id="hours" class="text-2xl md:text-4xl font-black font-mono text-neonPurple">00</span>
+                        <span class="block text-[10px] md:text-xs font-mono text-gray-400 mt-1 uppercase">Hours</span>
+                    </div>
+                    <div class="bg-gray-900/80 p-3 md:p-4 rounded-xl border border-gray-800">
+                        <span id="minutes" class="text-2xl md:text-4xl font-black font-mono text-neonPink">00</span>
+                        <span class="block text-[10px] md:text-xs font-mono text-gray-400 mt-1 uppercase">Mins</span>
+                    </div>
+                    <div class="bg-gray-900/80 p-3 md:p-4 rounded-xl border border-gray-800">
+                        <span id="seconds" class="text-2xl md:text-4xl font-black font-mono text-neonGreen">00</span>
+                        <span class="block text-[10px] md:text-xs font-mono text-gray-400 mt-1 uppercase">Secs</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+
+        <section class="my-12">
+            <div class="bg-cardBg/80 border border-gray-800 rounded-2xl p-6 backdrop-blur-sm relative overflow-hidden">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                            <i class="fas fa-crosshair text-neonPink"></i>Mini-Game kasi why not?
+                        </h2>
+                        <p class="text-xs font-mono text-gray-400">pop the bubbles po!</p>
+                    </div>
+                    
+                    <div class="flex items-center gap-4 bg-gray-900/90 px-4 py-2 rounded-xl border border-gray-800">
+                        <div>
+                            <span class="text-[10px] font-mono text-gray-400 uppercase block">Current XP</span>
+                            <span id="gameScore" class="text-2xl font-black font-mono text-neonGreen">0</span>
+                        </div>
+                        <button onclick="resetGame()" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-xs font-mono rounded-lg border border-gray-600 transition-all">
+                            <i class="fas fa-rotate-right mr-1"></i> Reset
+                        </button>
+                    </div>
+                </div>
+
+
+                <div class="relative w-full h-64 md:h-80 bg-gray-950/90 rounded-xl border border-gray-800 overflow-hidden cursor-crosshair">
+                    <canvas id="gameCanvas" class="w-full h-full block"></canvas>
+                    <div id="gameOverlay" class="absolute inset-0 bg-black/60 flex flex-col items-center justify-center p-4 text-center">
+                        <i class="fas fa-gamepad text-5xl text-neonCyan mb-3 animate-bounce"></i>
+                        <h3 class="text-xl font-bold text-white mb-1">Ready?</h3>
+                        <p class="text-xs text-gray-400 mb-4 max-w-sm">Pop as many as you can!</p>
+                        <button onclick="startGame()" class="px-6 py-2.5 bg-gradient-to-r from-neonCyan to-neonPurple text-black font-bold font-mono rounded-xl hover:scale-105 transition-all shadow-neon-cyan">
+                            START GAME
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <section class="my-12">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-extrabold text-white tracking-tight">
+                    <i class="fas fa-gift text-neonCyan mr-2"></i> CHOOSE YOUR BIRTHDAY QUEST
+                </h2>
+                <p class="text-xs font-mono text-gray-400 mt-1">Select any card below to pick your preference and claim your voucher!</p>
+            </div>
+
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto" id="questCardsContainer">
+
+            </div>
+        </section>
+
+        <section class="my-16 text-center">
+            <div class="bg-gradient-to-b from-cardBg/90 to-gray-950/90 border border-neonPink/40 rounded-3xl p-8 md:p-12 relative overflow-hidden backdrop-blur-md">
+                <h2 class="text-2xl md:text-3xl font-extrabold text-white mb-2">
+                    LOOT DROP
+                </h2>
+                <p class="text-xs font-mono text-neonPink mb-8 uppercase tracking-widest">
+                    [ Tap the Loot Crate to decrypt secret msg ]
+                </p>
+
+
+                <div class="relative inline-block group cursor-pointer" onclick="openLootDrop()">
+                    <div class="w-36 h-36 md:w-44 md:h-44 bg-gradient-to-br from-neonPurple to-neonPink rounded-2xl flex items-center justify-center shadow-neon-pink group-hover:scale-105 transition-all duration-300 animate-pulse-glow">
+                        <i id="lootIcon" class="fas fa-box-open text-6xl text-white group-hover:rotate-12 transition-transform"></i>
+                    </div>
+                    <div class="absolute -top-3 -right-3 bg-neonCyan text-black font-mono font-bold text-[10px] px-2 py-1 rounded-full uppercase shadow">
+                        Unopened
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <button onclick="openLootDrop()" class="px-8 py-3 bg-gradient-to-r from-neonPurple to-neonPink text-white font-bold rounded-xl shadow-neon-purple hover:opacity-90 transition-all font-mono text-sm">
+                        <i class="fas fa-key mr-2"></i> OPEN LOOT CRATE
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="my-16">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                        <i class="fas fa-images text-neonGreen"></i> Highlights & Memories
+                    </h2>
+                    <p class="text-xs font-mono text-gray-400">random stuff</p>
+                </div>
+            </div>
+
+
+            <div class="relative bg-cardBg border border-gray-800 rounded-2xl p-4 md:p-6 overflow-hidden">
+                <div id="mediaContainer" class="relative h-64 md:h-[450px] rounded-xl overflow-hidden bg-black flex items-center justify-center">
+
+                </div>
+
+
+                <div class="flex justify-between items-center mt-4">
+                    <button onclick="prevGallerySlide()" class="p-3 bg-gray-900 hover:bg-gray-800 text-neonCyan rounded-xl border border-gray-800 transition-all">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <div id="galleryIndicators" class="flex gap-2">
+
+                    </div>
+                    <button onclick="nextGallerySlide()" class="p-3 bg-gray-900 hover:bg-gray-800 text-neonCyan rounded-xl border border-gray-800 transition-all">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+
+        <footer class="text-center border-t border-gray-800/80 pt-8 mt-16 text-gray-500 font-mono text-xs">
+            <p>Crafted with <i class="fas fa-heart text-neonPink"></i> for Chummy Velares.</p>
+            <p class="mt-1 text-gray-600">Press F to pay respects to another year of life!</p>
+        </footer>
+
+    </div>
+
+
+    <div id="questModal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden z-50 items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-cardBg border border-neonCyan rounded-2xl max-w-lg w-full p-6 relative shadow-neon-cyan transform transition-all my-8 max-h-[90vh] flex flex-col">
+            <button onclick="closeQuestModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white z-10">
+                <i class="fas fa-xmark text-xl"></i>
+            </button>
+            <div class="text-center flex-shrink-0">
+                <div id="modalIconContainer" class="w-14 h-14 rounded-full bg-neonCyan/20 text-neonCyan flex items-center justify-center text-2xl mx-auto mb-3 border border-neonCyan">
+                    <i id="modalIcon" class="fas fa-gamepad"></i>
+                </div>
+                <h3 id="modalTitle" class="text-xl font-bold text-white mb-1">Quest Unlocked!</h3>
+                <p id="modalDescription" class="text-xs text-gray-300 font-mono mb-4">Details about this reward go here...</p>
+            </div>
+
+
+            <div id="modalOptionsArea" class="overflow-y-auto pr-1 my-2 flex-1">
+                <p id="modalOptionsHeader" class="text-xs font-mono text-neonCyan uppercase tracking-wider mb-3 text-center">Select Your Option:</p>
+                <div id="optionsGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-gray-800/80 flex-shrink-0 mt-2">
+                <button id="claimButton" onclick="claimQuest()" class="w-full py-3 bg-neonCyan text-black font-bold font-mono rounded-xl hover:bg-cyan-400 transition-all">
+                    CONFIRM & CLAIM VOUCHER
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="lootModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden z-50 items-center justify-center p-4">
+        <div class="bg-cardBg border border-neonPink rounded-2xl max-w-lg w-full p-6 md:p-8 relative shadow-neon-pink text-center transform transition-all">
+            <button onclick="closeLootModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+                <i class="fas fa-xmark text-xl"></i>
+            </button>
+            <div class="w-20 h-20 rounded-full bg-neonPink/20 text-neonPink flex items-center justify-center text-4xl mx-auto mb-4 border border-neonPink animate-bounce">
+                <i class="fas fa-crown"></i>
+            </div>
+            <h3 class="text-2xl font-black text-white mb-1">MESSAGE DECRYPTED!</h3>
+            <p class="text-xs font-mono text-neonCyan mb-4">rawr?</p>
+
+            <div class="bg-gray-950/80 p-4 md:p-6 rounded-xl border border-gray-800 text-left font-mono text-xs md:text-sm text-gray-300 leading-relaxed max-h-60 overflow-y-auto mb-6">
+                <p class="mb-3 text-neonPink font-bold">Hey Chumchum,</p>
+                <p class="mb-3">Happy Birthday! I hope your special day is filled with as much happiness as you bring to the people around you.</p>
+                <p class="mb-3">I wish you the best year ahead—I'm excited for all the memories and moments still waiting for us!</p>
+                <p class="text-right text-neonCyan font-bold">- amina</p>
+            </div>
+
+            <button onclick="closeLootModal()" class="px-8 py-3 bg-gradient-to-r from-neonPurple to-neonPink text-white font-bold font-mono rounded-xl shadow-neon-purple hover:opacity-90 transition-all">
+                I'LL BE HERE TO SUPPORT YOU ALWAYS, IN ALL WAYS.
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Access Code Verification
+        function verifyAccessCode() {
+            const inputVal = document.getElementById('accessCodeInput').value.trim();
+            const errorMsg = document.getElementById('accessErrorMsg');
+            
+            if (inputVal.toUpperCase() === "OCTOBER 19") {
+                document.getElementById('countdownGate').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('countdownGate').style.display = 'none';
+                }, 500);
+                playChimeSound();
+                confetti({ particleCount: 100, spread: 80, origin: { y: 0.5 } });
+            } else {
+                errorMsg.classList.remove('hidden');
+                playTone(200, 'sawtooth', 0.2, 0.2);
+            }
+        }
+
+        const targetDate = new Date('October 23, 2026 00:00:00').getTime();
+
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const distance = targetDate - now;
+
+            if (distance <= 0) {
+                document.getElementById('countdownGate').style.display = 'none';
+                return;
+            }
+
+            const d = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((distance % (1000 * 60)) / 1000);
+
+            document.getElementById('days').innerText = String(d).padStart(2, '0');
+            document.getElementById('hours').innerText = String(h).padStart(2, '0');
+            document.getElementById('minutes').innerText = String(m).padStart(2, '0');
+            document.getElementById('seconds').innerText = String(s).padStart(2, '0');
+
+            document.getElementById('gateDays').innerText = String(d).padStart(2, '0');
+            document.getElementById('gateHours').innerText = String(h).padStart(2, '0');
+            document.getElementById('gateMinutes').innerText = String(m).padStart(2, '0');
+            document.getElementById('gateSeconds').innerText = String(s).padStart(2, '0');
+        }
+        setInterval(updateCountdown, 1000);
+        updateCountdown();
+
+        // YOUR EXACT PERSONAL QUEST CARDS UNTOUCHED
+        const questCards = [
+            {
+                id: 1,
+                title: "Co-Op Gaming Night",
+                category: "GAMING REWARD",
+                icon: "fa-gamepad",
+                color: "neonCyan",
+                desc: "Choose which game we'll play for a full evening of uninterrupted co-op multiplayer session!",
+                badge: "UNLOCKED",
+                claimed: false,
+                selectedOption: null,
+                options: [
+                    { name: "It Takes Two", img: "assets/ittakestwo.jpg", fallbackImg: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=400&q=80", icon: "🎮" },
+                    { name: "Unravel Two", img: "assets/unraveltwo.jpg", fallbackImg: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=400&q=80", icon: "🧶" },
+                    { name: "A Way Out", img: "assets/awayout.jpg", fallbackImg: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=400&q=80", icon: "🏃" },
+                    { name: "Sons of the Forest", img: "assets/sonsoftheforest.jpg", fallbackImg: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=400&q=80", icon: "🪓" },
+                    { name: "FiveM", img: "assets/fivem.png", fallbackImg: "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=400&q=80", icon: "🚗" },
+                    { name: "VALORANT", img: "assets/valorant.png", fallbackImg: "https://images.unsplash.com/photo-1560253023-3ec5d502959f?auto=format&fit=crop&w=400&q=80", icon: "🎯" }
+                ]
+            },
+            {
+                id: 2,
+                title: "Discord Movie Stream",
+                category: "ENTERTAINMENT",
+                icon: "fa-film",
+                color: "neonPurple",
+                desc: "Pick your preferred genre for a movie or binge session over stream!",
+                badge: "CLAIMABLE",
+                claimed: false,
+                selectedOption: null,
+                options: [
+                    { name: "Action & Sci-Fi", img: "assets/action.jpg", fallbackImg: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=400&q=80", icon: "💥" },
+                    { name: "Horror & Thriller", img: "assets/horror.webp", fallbackImg: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=400&q=80", icon: "👻" },
+                    { name: "Comedy & Chill", img: "assets/comedy.jpg", fallbackImg: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=400&q=80", icon: "🍿" },
+                    { name: "Drama & Romance", img: "assets/drama.jpg", fallbackImg: "https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=400&q=80", icon: "🎭" },
+                    { name: "Mystery & Crime", img: "assets/mystery.webp", fallbackImg: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=400&q=80", icon: "🔍" }
+                ]
+            }
+        ];
+
+        let activeCardId = null;
+        let tempSelectedOption = null;
+
+        function renderQuestCards() {
+            const container = document.getElementById('questCardsContainer');
+            container.innerHTML = questCards.map(card => `
+                <div onclick="openQuestModal(${card.id})" class="bg-cardBg border ${card.claimed ? 'border-gray-700 opacity-80' : 'border-gray-800 hover:border-' + card.color} rounded-2xl p-6 transition-all duration-300 ${card.claimed ? '' : 'hover:-translate-y-2 cursor-pointer'} relative group shadow-lg">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-[10px] font-mono text-${card.color} tracking-widest uppercase bg-gray-900 px-2 py-1 rounded border border-gray-800">${card.category}</span>
+                        <span class="text-xs font-mono ${card.claimed ? 'text-neonPink' : 'text-neonGreen'} flex items-center gap-1">
+                            <i class="fas ${card.claimed ? 'fa-lock' : 'fa-check-circle'}"></i> 
+                            ${card.claimed ? 'CLAIMED' : card.badge}
+                        </span>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-gray-900 border border-gray-800 flex items-center justify-center text-xl text-${card.color} mb-4 ${card.claimed ? '' : 'group-hover:scale-110'} transition-transform">
+                        <i class="fas ${card.icon}"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-1 ${card.claimed ? 'line-through text-gray-400' : 'group-hover:text-' + card.color} transition-colors">${card.title}</h3>
+                    <p class="text-xs text-gray-400 font-mono mb-3 line-clamp-2">${card.desc}</p>
+                    
+                    ${card.selectedOption ? `
+                        <div class="bg-gray-950/80 border border-neonCyan/40 p-2 rounded-xl text-xs font-mono text-neonCyan mb-3 flex items-center gap-2">
+                            <i class="fas fa-bookmark text-neonPink"></i> Selected: <strong class="text-white">${card.selectedOption}</strong>
+                        </div>
+                    ` : ''}
+
+                    <div class="mt-4 pt-4 border-t border-gray-800/80 flex items-center justify-between text-xs font-mono ${card.claimed ? 'text-neonPink font-bold' : 'text-gray-400'}">
+                        <span>${card.claimed ? 'CLAIMED' : 'Click to select option'}</span>
+                        <i class="fas ${card.claimed ? 'fa-check' : 'fa-arrow-right text-' + card.color + ' group-hover:translate-x-1'} transition-transform"></i>
+                    </div>
+                </div>
+            `).join('');
+        }
+        renderQuestCards();
+
+        function selectOptionTile(optionName) {
+            tempSelectedOption = optionName;
+            const card = questCards.find(c => c.id === activeCardId);
+            renderOptionsGrid(card);
+            playTone(520, 'sine', 0.08);
+
+            const claimBtn = document.getElementById('claimButton');
+            claimBtn.innerText = `CONFIRM & CLAIM: ${optionName.toUpperCase()}`;
+            claimBtn.disabled = false;
+            claimBtn.className = "w-full py-3 bg-neonCyan text-black font-bold font-mono rounded-xl hover:bg-cyan-400 transition-all cursor-pointer shadow-neon-cyan";
+        }
+
+        function renderOptionsGrid(card) {
+            const grid = document.getElementById('optionsGrid');
+            if (!card.options || card.options.length === 0) {
+                grid.innerHTML = `<p class="text-xs text-gray-400 col-span-full text-center">No options available.</p>`;
+                return;
+            }
+
+            grid.innerHTML = card.options.map(opt => {
+                const isSelected = tempSelectedOption === opt.name;
+                const fallbackAttr = opt.fallbackImg ? `onerror="this.onerror=null;this.src='${opt.fallbackImg}';"` : '';
+                return `
+                    <div onclick="${card.claimed ? '' : `selectOptionTile('${opt.name}')`}" 
+                         class="bg-gray-900 border ${isSelected ? 'border-neonCyan ring-2 ring-neonCyan/50 scale-105' : 'border-gray-800'} rounded-xl p-2 flex flex-col items-center justify-between transition-all cursor-pointer hover:border-neonCyan relative group overflow-hidden">
+                        <div class="w-full h-20 rounded-lg overflow-hidden mb-2 bg-gray-950 relative">
+                            <img src="${opt.img}" ${fallbackAttr} alt="${opt.name}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                            <div class="absolute top-1 right-1 bg-black/70 px-1.5 py-0.5 rounded text-[10px]">${opt.icon}</div>
+                        </div>
+                        <span class="text-[11px] font-bold text-center text-white line-clamp-1 w-full font-mono">${opt.name}</span>
+                        ${isSelected ? '<span class="text-[9px] font-mono text-neonCyan font-bold mt-1">✓ SELECTED</span>' : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openQuestModal(id) {
+            const card = questCards.find(c => c.id === id);
+            if (!card) return;
+
+            activeCardId = id;
+            tempSelectedOption = card.selectedOption;
+
+            if (card.claimed) {
+                document.getElementById('modalTitle').innerText = "Already Claimed!";
+                document.getElementById('modalDescription').innerText = card.selectedOption ? `You chose "${card.selectedOption}". claimed na nganiii 😜` : "claimed na nganiii 😜";
+                document.getElementById('modalIcon').className = "fas fa-circle-check text-neonPink";
+                document.getElementById('modalIconContainer').className = "w-14 h-14 rounded-full bg-neonPink/20 text-neonPink flex items-center justify-center text-2xl mx-auto mb-3 border border-neonPink";
+                document.getElementById('modalOptionsHeader').innerText = `Your Selected Choice: ${card.selectedOption || ''}`;
+                
+                renderOptionsGrid(card);
+
+                const claimBtn = document.getElementById('claimButton');
+                claimBtn.innerText = "ALREADY CLAIMED";
+                claimBtn.disabled = true;
+                claimBtn.className = "w-full py-3 bg-gray-800 text-gray-500 font-bold font-mono rounded-xl cursor-not-allowed border border-gray-700";
+
+                document.getElementById('questModal').classList.remove('hidden');
+                document.getElementById('questModal').classList.add('flex');
+                playTone(300, 'sawtooth', 0.15);
+                return;
+            }
+
+            document.getElementById('modalTitle').innerText = card.title;
+            document.getElementById('modalDescription').innerText = card.desc;
+            document.getElementById('modalIcon').className = `fas ${card.icon}`;
+            document.getElementById('modalIconContainer').className = `w-14 h-14 rounded-full bg-${card.color}/20 text-${card.color} flex items-center justify-center text-2xl mx-auto mb-3 border border-${card.color}`;
+            document.getElementById('modalOptionsHeader').innerText = "Choose your option:";
+
+            renderOptionsGrid(card);
+
+            const claimBtn = document.getElementById('claimButton');
+            if (tempSelectedOption) {
+                claimBtn.innerText = `CONFIRM & CLAIM: ${tempSelectedOption.toUpperCase()}`;
+                claimBtn.disabled = false;
+                claimBtn.className = "w-full py-3 bg-neonCyan text-black font-bold font-mono rounded-xl hover:bg-cyan-400 transition-all cursor-pointer shadow-neon-cyan";
+            } else {
+                claimBtn.innerText = "SELECT AN OPTION FIRST";
+                claimBtn.disabled = true;
+                claimBtn.className = "w-full py-3 bg-gray-800 text-gray-500 font-bold font-mono rounded-xl cursor-not-allowed border border-gray-700";
+            }
+
+            document.getElementById('questModal').classList.remove('hidden');
+            document.getElementById('questModal').classList.add('flex');
+            playTone(440, 'sine', 0.1);
+        }
+
+        function closeQuestModal() {
+            document.getElementById('questModal').classList.add('hidden');
+            document.getElementById('questModal').classList.remove('flex');
+        }
+
+        function claimQuest() {
+            if (!activeCardId) return;
+
+            const card = questCards.find(c => c.id === activeCardId);
+            if (card && !card.claimed) {
+                if (!tempSelectedOption) return;
+
+                card.claimed = true;
+                card.selectedOption = tempSelectedOption;
+                renderQuestCards();
+
+                closeQuestModal();
+                confetti({
+                    particleCount: 60,
+                    spread: 70,
+                    origin: { y: 0.7 }
+                });
+                playChimeSound();
+            }
+        }
+
+        function openLootDrop() {
+            document.getElementById('lootIcon').className = "fas fa-box-open text-6xl text-white animate-bounce";
+            playChimeSound();
+            confetti({
+                particleCount: 120,
+                spread: 100,
+                origin: { y: 0.6 }
+            });
+
+            setTimeout(() => {
+                document.getElementById('lootModal').classList.remove('hidden');
+                document.getElementById('lootModal').classList.add('flex');
+            }, 300);
+        }
+
+        function closeLootModal() {
+            document.getElementById('lootModal').classList.add('hidden');
+            document.getElementById('lootModal').classList.remove('flex');
+        }
+
+        // GALLERY ITEMS
+        const galleryItems = [
+            {
+                type: "image",
+                src: "assets/image.png", 
+                fallbackSrc: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+                tag: "VINEWOOD",
+                caption: "just a random pic from your little photoshoot"
+            },
+            {
+                type: "image",
+                src: "assets/CHUMMY 2.png",
+                fallbackSrc: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
+                tag: " ",
+                caption: " "
+            },
+            {
+                type: "image",
+                src: "assets/CHUMMY.png",
+                fallbackSrc: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
+                tag: " ",
+                caption: " "
+            },
+            {
+                type: "image",
+                src: "assets/CHUMMY 3.png",
+                fallbackSrc: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
+                tag: " ",
+                caption: " "
+            },
+            {
+                type: "image",
+                src: "assets/RECMATS GRIND.png",
+                fallbackSrc: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
+                tag: " ",
+                caption: "nang yayakap ng aluluts"
+            },
+            {
+                type: "image",
+                src: "assets/IT TAKES TWO.png",
+                fallbackSrc: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
+                tag: "CODY AND MAY",
+                caption: "hi, Cody!"
+            },
+            {
+                type: "video",
+                src: "assets/tangangpd.mp4",
+                fallbackSrc: "https://www.w3schools.com/html/mov_bbb.mp4",
+                tag: "HULI PERO 'DI KULONG",
+                caption: "mga tangang pd sa nxgn"
+            },
+            {
+                type: "video",
+                src: "assets/buff.mp4",
+                fallbackSrc: "https://www.w3schools.com/html/mov_bbb.mp4",
+                tag: "HUG BUFF?",
+                caption: "may intro ka na sana?"
+            }
+        ];
+
+        let currentSlide = 0;
+
+        function renderGallery() {
+            const item = galleryItems[currentSlide];
+            const container = document.getElementById('mediaContainer');
+            
+            let elementHtml = '';
+            if (item.type === 'video') {
+                const fallback = item.fallbackSrc ? `<source src="${item.fallbackSrc}" type="video/mp4">` : '';
+                elementHtml = `
+                    <video controls autoplay loop muted class="w-full h-full object-cover">
+                        <source src="${item.src}" type="video/mp4">
+                        ${fallback}
+                        Your browser does not support video play.
+                    </video>
+                `;
+            } else if (item.type === 'youtube') {
+                elementHtml = `
+                    <iframe class="w-full h-full" src="${item.src}?autoplay=1&mute=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                `;
+            } else {
+                const fallbackAttr = item.fallbackSrc ? `onerror="this.onerror=null;this.src='${item.fallbackSrc}';"` : '';
+                elementHtml = `
+                    <img src="${item.src}" ${fallbackAttr} alt="Memory" class="w-full h-full object-cover transition-opacity duration-500">
+                `;
+            }
+
+            container.innerHTML = `
+                ${elementHtml}
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-6 pointer-events-none">
+                    <span class="text-neonCyan font-mono text-xs uppercase tracking-wider mb-1">${item.tag}</span>
+                    <h3 class="text-lg md:text-xl font-bold text-white">${item.caption}</h3>
+                </div>
+            `;
+
+            const indicators = document.getElementById('galleryIndicators');
+            indicators.innerHTML = galleryItems.map((_, idx) => `
+                <button onclick="goToSlide(${idx})" class="w-2.5 h-2.5 rounded-full transition-all ${idx === currentSlide ? 'bg-neonCyan w-6' : 'bg-gray-700'}"></button>
+            `).join('');
+        }
+
+        function nextGallerySlide() {
+            currentSlide = (currentSlide + 1) % galleryItems.length;
+            renderGallery();
+        }
+
+        function prevGallerySlide() {
+            currentSlide = (currentSlide - 1 + galleryItems.length) % galleryItems.length;
+            renderGallery();
+        }
+
+        function goToSlide(idx) {
+            currentSlide = idx;
+            renderGallery();
+        }
+
+        renderGallery();
+
+const bgmAudio = new Audio('assets/js_lullaby.mp3'); 
+        bgmAudio.loop = true;
+        bgmAudio.volume = 0.4; // Adjust volume (0.0 to 1.0)
+        
+        let isAudioMuted = true;
+
+        // Keep a simple synth function just for click/chime effects (like popping targets)
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playTone(freq, type = 'sine', duration = 0.1, gainVal = 0.1) {
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(gainVal, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e) {}
+        }
+
+        function playChimeSound() {
+            try {
+                initAudio();
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    setTimeout(() => playTone(freq, 'triangle', 0.2, 0.15), idx * 80);
+                });
+            } catch(e) {}
+        }
+
+        // Toggle button controls the real MP3 song now
+        function toggleAudio() {
+            initAudio();
+            isAudioMuted = !isAudioMuted;
+            const btn = document.getElementById('soundToggleBtn');
+            const icon = document.getElementById('soundIcon');
+            const label = document.getElementById('soundLabel');
+
+            if (!isAudioMuted) {
+                icon.className = "fas fa-volume-high";
+                label.innerText = "BGM ON";
+                btn.classList.add('text-neonGreen', 'border-neonGreen');
+                
+                // Play the actual MP3 file
+                bgmAudio.play().catch(e => console.log("Audio play blocked or file missing:", e));
+            } else {
+                icon.className = "fas fa-volume-xmark";
+                label.innerText = "BGM OFF";
+                btn.classList.remove('text-neonGreen', 'border-neonGreen');
+                
+                // Pause the MP3 file
+                bgmAudio.pause();
+            }
+        }
+
+        // Mini-Game Canvas Setup (SLOWED DOWN & EASIER TO POP WITH ROBLOX ICONS)
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let gameScore = 0;
+        let gameRunning = false;
+        let targets = [];
+        let particles = [];
+        let animFrameId = null;
+
+        function resizeCanvas() {
+            if (canvas && canvas.parentElement) {
+                canvas.width = canvas.parentElement.clientWidth;
+                canvas.height = canvas.parentElement.clientHeight;
+            }
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Target {
+            constructor() {
+                this.x = Math.random() * (canvas.width - 60) + 30;
+                this.y = canvas.height + 30;
+                this.radius = Math.random() * 10 + 22; // Slightly larger targets
+                
+                // SLOWED DOWN SPEED: Changed from 1.2-2.7 to 0.4-0.9
+                this.speed = Math.random() * 0.5 + 0.4; 
+                
+                this.color = ['#00f3ff', '#b026ff', '#ff007f', '#39ff14', '#ffcc00'][Math.floor(Math.random() * 5)];
+                this.icon = ['🐾', '⛏️', '👆', '🥚', '💎', '⚡'][Math.floor(Math.random() * 6)];
+            }
+
+            update() {
+                this.y -= this.speed;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color + '33';
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 2;
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.font = `${this.radius}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.icon, this.x, this.y);
+            }
+        }
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.vx = (Math.random() - 0.5) * 5;
+                this.vy = (Math.random() - 0.5) * 5;
+                this.alpha = 1;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.alpha -= 0.025;
+            }
+
+            draw() {
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        function startGame() {
+            document.getElementById('gameOverlay').classList.add('hidden');
+            gameRunning = true;
+            gameScore = 0;
+            targets = [];
+            particles = [];
+            document.getElementById('gameScore').innerText = gameScore;
+            gameLoop();
+        }
+
+        function resetGame() {
+            gameRunning = false;
+            if (animFrameId) cancelAnimationFrame(animFrameId);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            document.getElementById('gameOverlay').classList.remove('hidden');
+            gameScore = 0;
+            document.getElementById('gameScore').innerText = '0';
+        }
+
+        function createPopParticles(x, y, color) {
+            for (let i = 0; i < 12; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+        }
+
+        function gameLoop() {
+            if (!gameRunning) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Lower spawn chance so screen is not overcrowded (0.025 instead of 0.04)
+            if (Math.random() < 0.025 && targets.length < 8) {
+                targets.push(new Target());
+            }
+
+            for (let i = targets.length - 1; i >= 0; i--) {
+                const t = targets[i];
+                t.update();
+                t.draw();
+
+                if (t.y < -40) {
+                    targets.splice(i, 1);
+                }
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.update();
+                p.draw();
+
+                if (p.alpha <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            animFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        canvas.addEventListener('click', (e) => {
+            if (!gameRunning) return;
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+
+            for (let i = targets.length - 1; i >= 0; i--) {
+                const t = targets[i];
+                const dist = Math.hypot(clickX - t.x, clickY - t.y);
+                
+                // EXPANDED HITBOX: Added +15px tolerance so targets pop much more easily
+                if (dist < t.radius + 15) {
+                    createPopParticles(t.x, t.y, t.color);
+                    targets.splice(i, 1);
+                    gameScore += 100;
+                    document.getElementById('gameScore').innerText = gameScore;
+                    playTone(600 + Math.random() * 400, 'sine', 0.08, 0.1);
+                    break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
